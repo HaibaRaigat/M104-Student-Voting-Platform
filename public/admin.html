@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Top 5 Pages</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<h1>Top 5 Pages</h1>
+<div id="topList"></div>
+
+<script>
+fetch('/api/top')
+  .then(res=>res.json())
+  .then(data=>{
+    const container = document.getElementById('topList');
+    data.forEach((page,i)=>{
+      const div = document.createElement('div');
+      div.innerHTML = `<h3>${i+1}. ${page.originalName} - Votes: ${page.votes}</h3>
+                 <iframe sandbox="allow-same-origin allow-scripts" src="/submissions/${page.filename}" width="600" height="300"></iframe>`;
+
+      container.appendChild(div);
+    });
+  });
+</script>
+</body>
+</html>

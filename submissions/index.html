@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="author" content="haiba raigat">
+  <title>Éditeur HTML Étudiant</title>
+  <style>
+    body { font-family: Arial; margin: 0; display: flex; height: 100vh; }
+    textarea { flex: 1; padding: 10px; font-family: monospace; font-size: 16px; }
+    #status { background: #222; color: white; padding: 10px; font-size: 14px; }
+  </style>
+</head>
+<body>
+  <div id="status">Statut: Connecté</div>
+  <textarea id="editor" placeholder="Écrivez votre code HTML ici..."></textarea>
+
+  <audio id="beep" src="data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEA..." preload="auto"></audio>
+
+  <script>
+    const ws = new WebSocket('ws://' + location.host);
+    const username = prompt("Entrez votre nom :") || 'Anonyme';
+    const editor = document.getElementById('editor');
+    const beep = document.getElementById('beep');
+
+    ws.onopen = () => ws.send(JSON.stringify({ type: 'register', username }));
+
+    window.addEventListener('beforeunload', () => {
+      ws.send(JSON.stringify({ type: 'exit' }));
+      editor.value = '';
+      beep.play();
+    });
+
+    document.addEventListener('paste', (e) => {
+      e.preventDefault();
+      const text = e.clipboardData.getData('text');
+      editor.value += scramble(text);
+    });
+
+    function scramble(txt) {
+      const chars = "!@#$%^&*()_+=-{}[];:<>,.?/|";
+      return txt.split('').map(c => chars[Math.floor(Math.random() * chars.length)]).join('');
+    }
+  </script>
+</body>
+</html>

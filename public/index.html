@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>M104 - Student Voting</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<!-- Navbar -->
+<nav class="navbar">
+  <div class="logo">M104 Voting</div>
+  <ul class="nav-links">
+    <li><a href="#upload">Upload</a></li>
+    <li><a href="#voting">Vote</a></li>
+    <li><a href="/admin">Top 5</a></li>
+  </ul>
+</nav>
+
+<!-- Hero Section -->
+<header class="hero">
+  <h1>Welcome to M104 Student Voting</h1>
+  <p>Upload your HTML page and vote for the best student projects!</p>
+</header>
+
+<!-- Upload Section -->
+<section id="upload" class="section upload-section">
+  <h2>Upload your HTML page</h2>
+  <form action="/api/upload" method="POST" enctype="multipart/form-data">
+    <input type="file" name="file" accept=".html" required>
+    <button type="submit" class="btn">Upload</button>
+  </form>
+</section>
+
+<!-- Voting Section -->
+<section id="voting" class="section voting-section">
+  <h2>Pages to Vote</h2>
+  <div class="viewer">
+    <iframe id="pageFrame" sandbox="allow-scripts allow-same-origin" src="" width="100%" height="400"></iframe>
+    <div class="btn-group">
+      <button id="prevBtn" class="btn">Previous</button>
+      <button id="nextBtn" class="btn">Next</button>
+      <button id="voteBtn" class="btn btn-primary">I Like This Page</button>
+    </div>
+  </div>
+</section>
+
+<!-- Top 5 Section -->
+<section id="top5" class="section top5-section">
+  <h2>Top 5 Pages</h2>
+  <div id="topList"></div>
+</section>
+
+<script>
+let pages = [];
+let index = 0;
+
+// Load all student pages
+function loadPages() {
+  fetch('/api/submissions')
+    .then(res => res.json())
+    .then(data => {
+      pages = data;
+      if(pages.length) showPage(0);
+    });
+}
+
+// Show page in iframe
+function showPage(i) {
+  index = i;
+  document.getElementById('pageFrame').src = '/submissions/' + pages[index].filename;
+}
+
+// Navigation buttons
+document.getElementById('prevBtn').onclick = () => { if(index>0) showPage(index-1); }
+document.getElementById('nextBtn').onclick = () => { if(index<pages.length-1) showPage(index+1); }
+
+// Vote button
+document.getElementById('voteBtn').onclick = () => {
+  fetch('/api/vote/' + pages[index].id, { method:'POST' })
+    .then(res=>res.json())
+    .then(res=>{
+      if(res.success) alert('Vote counted!');
+      else alert('Vote not counted');
+    });
+}
+
+loadPages();
+
+// Load Top 5 pages
+const container = document.getElementById('topList');
+fetch('/api/top')
+  .then(res => res.json())
+  .then(data => {
+    if(data.length === 0){
+      container.innerHTML = "<p>No votes yet.</p>";
+      return;
+    }
+    data.forEach((page, i) => {
+      const div = document.createElement('div');
+      div.classList.add('top-page');
+      div.innerHTML = `<h3>${i+1}. ${page.originalName} - Votes: ${page.votes}</h3>
+                       <iframe sandbox="allow-scripts allow-same-origin" 
+                               src="/submissions/${page.filename}" 
+                               width="100%" height="300"></iframe>`;
+      container.appendChild(div);
+    });
+  })
+  .catch(err => {
+    container.innerHTML = "<p>Error loading top pages.</p>";
+    console.error(err);
+  });
+</script>
+</body>
+</html>
